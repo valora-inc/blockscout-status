@@ -120,6 +120,26 @@ interface BlockscoutTransferResponse {
   }
 }
 
+export function blockscoutResponseIncludesTransfer(
+  blockscoutResponse: BlockscoutTransferResponse,
+  transferLog: {
+    transactionHash: string
+    args: { from?: string; to?: string; value?: bigint }
+  },
+): boolean {
+  return !!blockscoutResponse.data.tokenTransferTxs.edges.find(
+    (edge) =>
+      edge.node.transactionHash === transferLog.transactionHash &&
+      edge.node.tokenTransfer.edges.find(
+        ({ node: { fromAddressHash, toAddressHash, value } }) =>
+          fromAddressHash.toLowerCase() ===
+            transferLog.args.from?.toLowerCase() &&
+          toAddressHash.toLowerCase() === transferLog.args.to?.toLowerCase() &&
+          value === transferLog.args.value?.toString(),
+      ),
+  )
+}
+
 export async function main() {
   let error: string | undefined = undefined
   const { blockscoutUrl, rpcUrl, maxBlocksBehind } = loadConfig()
@@ -167,19 +187,10 @@ export async function main() {
     .json<BlockscoutTransferResponse>()
 
   // check that the transfer from the rpc node is in the response
-  const blockscoutIncludesTransfer =
-    !!tokenTransfersResponse.data.tokenTransferTxs.edges.find(
-      (edge) =>
-        edge.node.transactionHash === transferLog.transactionHash &&
-        edge.node.tokenTransfer.edges.find(
-          ({ node: { fromAddressHash, toAddressHash, value } }) =>
-            fromAddressHash.toLowerCase() ===
-              transferLog.args.from?.toLowerCase() &&
-            toAddressHash.toLowerCase() ===
-              transferLog.args.to?.toLowerCase() &&
-            value === transferLog.args.value?.toString(),
-        ),
-    )
+  const blockscoutIncludesTransfer = blockscoutResponseIncludesTransfer(
+    tokenTransfersResponse,
+    transferLog,
+  )
   if (!blockscoutIncludesTransfer) {
     error = `Blockscout does not include transfer with hash ${transferLog.transactionHash} in transfers for user ${transferLog.args.from} from block ${fromBlock}`
   }
