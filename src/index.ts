@@ -79,7 +79,49 @@ query Transfers($address: AddressHash!, $afterCursor: String) {
 }
 `
 
+interface BlockscoutTransferResponse {
+  // TODO use zod schema for this?
+  data: {
+    tokenTransferTxs: {
+      edges: {
+        node: {
+          blockNumber: number
+          feeToken: string
+          gasPrice: string
+          gasUsed: string
+          gatewayFee: string
+          gatewayFeeRecipient: string | null
+          input: string
+          timestamp: string
+          transactionHash: string
+          tokenTransfer: {
+            edges: {
+              node: {
+                fromAddressHash: string
+                toAddressHash: string
+                fromAccountHash: string | null
+                toAccountHash: string | null
+                value: string | null
+                tokenAddress: string
+                tokenType: string
+                tokenId: string | null
+              }
+            }[]
+          }
+        }
+      }[]
+      pageInfo: {
+        startCursor: string
+        endCursor: string
+        hasNextPage: boolean
+        hasPreviousPage: boolean
+      }
+    }
+  }
+}
+
 export async function main() {
+  let error: string | undefined = undefined
   const { blockscoutUrl, rpcUrl, maxBlocksBehind } = loadConfig()
 
   const client = createPublicClient({
@@ -122,21 +164,35 @@ export async function main() {
         variables: { address: transferLog.args.from },
       },
     })
-    .json()
+    .json<BlockscoutTransferResponse>()
 
-  console.log(
-    `tokenTransfersResponse json: ${JSON.stringify(
-      await tokenTransfersResponse,
-    )}`,
-  )
+  // check that the transfer from the rpc node is in the response
+  const blockscoutIncludesTransfer =
+    !!tokenTransfersResponse.data.tokenTransferTxs.edges.find(
+      (edge) =>
+        edge.node.transactionHash === transferLog.transactionHash &&
+        edge.node.tokenTransfer.edges.find(
+          ({ node: { fromAddressHash, toAddressHash, value } }) =>
+            fromAddressHash.toLowerCase() ===
+              transferLog.args.from?.toLowerCase() &&
+            toAddressHash.toLowerCase() ===
+              transferLog.args.to?.toLowerCase() &&
+            value === transferLog.args.value?.toString(),
+        ),
+    )
+  if (!blockscoutIncludesTransfer) {
+    error = `Blockscout does not include transfer with hash ${transferLog.transactionHash} in transfers for user ${transferLog.args.from} from block ${fromBlock}`
+  }
 
   return {
-    ok: true, // TODO
+    ok: blockscoutIncludesTransfer, // can chain this with other checks for an overall health check
+    error,
   }
 }
 
 main()
-  .then(() => {
+  .then((result) => {
+    console.log(JSON.stringify(result))
     console.log('done')
     process.exit(0)
   })
