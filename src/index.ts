@@ -190,10 +190,11 @@ export async function main() {
   }
 }
 
-main()
-  .then((result) => {
-    console.log(JSON.stringify(result))
-    console.log('done')
-    process.exit(0)
-  })
-  .catch(console.error)
+// to test locally, uncomment the following
+// main()
+//   .then((result) => {
+//     console.log(JSON.stringify(result))
+//     console.log('done')
+//     process.exit(0)
+//   })
+//   .catch(console.error)
