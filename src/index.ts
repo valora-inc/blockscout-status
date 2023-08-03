@@ -1,5 +1,7 @@
 import yargs from 'yargs'
 import fetch from 'node-fetch'
+import { createPublicClient, http } from 'viem'
+import { celo } from 'viem/chains'
 
 function loadConfig() {
   return yargs
@@ -9,9 +11,24 @@ function loadConfig() {
         type: 'string',
         default: 'https://rc1-blockscout.celo-testnet.org/mainnet',
       },
-      'test-user-address': {
+      'test-token-address': {
         type: 'string',
-        demandOption: true,
+        default: '0x765de816845861e75a25fca122bb6898b8b1282a', // cusd mainnet
+        description:
+          'address of token to check blockscout can find recent transfers for. Should have high transfer ' +
+          'volume to make the test effective (if latest transfers are several blocks back, blockscout could be behind ' +
+          'and still pass the test)',
+      },
+      'max-blocks-behind': {
+        type: 'number',
+        default: 3,
+        description: 'maximum number of blocks behind blockscout should be',
+      },
+      'rpc-url': {
+        type: 'string',
+        description:
+          'URL of the Celo RPC node to use. Should not be blockscout because we use this to cross-check blockscout results',
+        default: 'https://forno.celo.org',
       },
     })
     .parseSync()
@@ -63,17 +80,56 @@ query Transfers($address: AddressHash!, $afterCursor: String) {
 `
 
 export async function main() {
-  const { blockscoutUrl, testUserAddress } = loadConfig()
+  const { blockscoutUrl, rpcUrl, maxBlocksBehind } = loadConfig()
 
-  // token transfers
+  const client = createPublicClient({
+    chain: celo,
+    transport: http(rpcUrl),
+  })
+
+  // get recent transfers from the RPC node
+  const lastBlockNumber = await client.getBlockNumber()
+  const fromBlock = lastBlockNumber - BigInt(maxBlocksBehind + 1) // note: this relies on the contract having transfers every block. might need to rethink that.
+  const transferLogs = await client.getLogs({
+    toBlock: lastBlockNumber - BigInt(maxBlocksBehind),
+    fromBlock,
+    event: {
+      anonymous: false,
+      inputs: [
+        { indexed: true, name: 'from', type: 'address' },
+        { indexed: true, name: 'to', type: 'address' },
+        { indexed: false, name: 'value', type: 'uint256' },
+      ],
+      name: 'Transfer',
+      type: 'event',
+    },
+  })
+  if (!transferLogs.length) {
+    throw new Error(`No transfers found in block ${fromBlock}`)
+  }
+  const transferLog = transferLogs[0]
+
+  // verify blockscout can find recent transfers
   const tokenTransfersResponse = await fetch(`${blockscoutUrl}/graphql`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({
       query: TRANSFERS_QUERY,
-      variables: { address: testUserAddress },
+      variables: { address: transferLog.args.from },
     }),
   })
+
+  if (!tokenTransfersResponse.ok) {
+    throw new Error(
+      `Blockscout returned ${tokenTransfersResponse.status} querying for transfers for user ${transferLog.args.from}`,
+    )
+  }
+
+  console.log(
+    `tokenTransfersResponse json: ${JSON.stringify(
+      await tokenTransfersResponse.json(),
+    )}`,
+  )
 
   return {
     tokenTransfersOk: tokenTransfersResponse.ok,
