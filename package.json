@@ -47,7 +47,6 @@
   },
   "prettier": "@valora/prettier-config",
   "dependencies": {
-    "bignumber.js": "^9.1.1",
     "got": "^11.8.6",
     "viem": "^1.5.3",
     "yargs": "^17.7.2"
