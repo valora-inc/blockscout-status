@@ -1,7 +1,7 @@
 import yargs from 'yargs'
-import fetch from 'node-fetch'
 import { createPublicClient, http } from 'viem'
 import { celo } from 'viem/chains'
+import got from 'got'
 
 function loadConfig() {
   return yargs
@@ -110,28 +110,34 @@ export async function main() {
   const transferLog = transferLogs[0]
 
   // verify blockscout can find recent transfers
-  const tokenTransfersResponse = await fetch(`${blockscoutUrl}/graphql`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body: JSON.stringify({
-      query: TRANSFERS_QUERY,
-      variables: { address: transferLog.args.from },
-    }),
-  })
-
-  if (!tokenTransfersResponse.ok) {
-    throw new Error(
-      `Blockscout returned ${tokenTransfersResponse.status} querying for transfers for user ${transferLog.args.from}`,
-    )
-  }
+  const tokenTransfersResponse = await got
+    .post(`${blockscoutUrl}/graphql`, {
+      // method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      json: {
+        query: TRANSFERS_QUERY,
+        variables: { address: transferLog.args.from },
+      },
+    })
+    .json()
 
   console.log(
     `tokenTransfersResponse json: ${JSON.stringify(
-      await tokenTransfersResponse.json(),
+      await tokenTransfersResponse,
     )}`,
   )
 
   return {
-    tokenTransfersOk: tokenTransfersResponse.ok,
+    ok: true, // TODO
   }
 }
+
+main()
+  .then(() => {
+    console.log('done')
+    process.exit(0)
+  })
+  .catch(console.error)
