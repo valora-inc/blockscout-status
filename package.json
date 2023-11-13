@@ -26,7 +26,7 @@
     "deploy": "echo 'Deployed!'"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.7",
+    "@types/jest": "^29.5.8",
     "@types/shelljs": "^0.8.14",
     "@typescript-eslint/eslint-plugin": "^6.9.1",
     "@valora/eslint-config-typescript": "^1.0.2",
