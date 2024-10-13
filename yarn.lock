@@ -4378,10 +4378,10 @@ v8-to-istanbul@^9.0.1:
     "@types/istanbul-lib-coverage" "^2.0.1"
     convert-source-map "^1.6.0"
 
-viem@^2.21.21:
-  version "2.21.23"
-  resolved "https://registry.yarnpkg.com/viem/-/viem-2.21.23.tgz#3e54b8da6be4bd81452c242649e4aaa37b06c5f8"
-  integrity sha512-tGg0Ql8fG+Y4GWD/MaysDPCS7RGPW1FH2h5WrzxOS0aJaiqA0XjoO1BKLOqdpLeB26GhUXXo51soVZIgk42ARg==
+viem@^2.21.22:
+  version "2.21.24"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-2.21.24.tgz#5873f4f1b9c7cfae94a9a10467846e22241d262a"
+  integrity sha512-e9wEcQoHH2uuLJ885mWVI7IGx8QUiMWwr3vpeRyCm9H4Cu8u2rwSG8SzAwq12aKENx+0gAs36WHPj7KChJWeSA==
   dependencies:
     "@adraffy/ens-normalize" "1.11.0"
     "@noble/curves" "1.6.0"
