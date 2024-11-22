@@ -4396,10 +4396,10 @@ v8-to-istanbul@^9.0.1:
     "@types/istanbul-lib-coverage" "^2.0.1"
     convert-source-map "^1.6.0"
 
-viem@^2.21.47:
-  version "2.21.48"
-  resolved "https://registry.yarnpkg.com/viem/-/viem-2.21.48.tgz#f8f1d0bf5381282e22e6a1f8b72ebd6e64426480"
-  integrity sha512-/hBHyG1gdIIuiQv0z9YmzXl5eWJa0UCZGwkeuQzH2Bmg6FIEwZeEcxgiytXZydip+p2wMBFa1jdr7o5O1+mrIg==
+viem@^2.21.48:
+  version "2.21.49"
+  resolved "https://registry.yarnpkg.com/viem/-/viem-2.21.49.tgz#528d5e54747ba3125041cd753459a4ce673aaaa6"
+  integrity sha512-NNItYfTv4+yGE5DDKc+S/g2S7KeJn047GwgEYG60FAJlK0FzwuP6lQKSeQ8k7Y4VasfuKPqiT+XiilcCtTRiDQ==
   dependencies:
     "@noble/curves" "1.6.0"
     "@noble/hashes" "1.5.0"
