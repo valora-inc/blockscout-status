@@ -47,7 +47,7 @@
   },
   "prettier": "@valora/prettier-config",
   "dependencies": {
-    "got": "^11.8.6",
+    "got": "^14.4.5",
     "viem": "^2.21.55",
     "yargs": "^17.7.2"
   }
